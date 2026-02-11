@@ -125,10 +125,11 @@ class _ArrayLike extends Container {
 		super()
 	}
 
-	[Symbol.iterator]() {
-		return this._data[Symbol.iterator]()
+	*[Symbol.iterator]() {
+		for (const element of this.ädata)
+			yield element
 	}
-
+	
 	clear() {
 		this._data.length = 0
 	}
@@ -200,7 +201,7 @@ class Vector extends _ArrayLike {
 	constructor() {
 		super();
 	}
-
+	
 	set(index, value) {
 		expecttype(index, "number")
 		assert(index > 0)
@@ -280,7 +281,12 @@ class Map extends Container {
 	constructor() {
 		super()
 	}
-
+	
+	*[Symbol.iterator]() {
+		for (const element of this.#data)
+			yield element
+	}
+	
 	set(key, value) {
 		if (!this.#data.has(key))
 			raise(`Key does not exist: ${key}`)
@@ -332,10 +338,6 @@ class Map extends Container {
 
 	clear() {
 		this.#data.clear()
-	}
-	
-	[Symbol.iterator]() {
-		return this.#data.entries()
 	}
 
 	getData() {
