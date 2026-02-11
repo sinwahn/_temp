@@ -8,7 +8,7 @@ function raise_typeerror(message) {
 
 function assert(value, message) {
     if (value === undefined || value === null || value === false)
-        throw message
+        raise(message || 'assertation failed!')
     return value
 }
 
