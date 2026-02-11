@@ -137,6 +137,10 @@ class _ArrayLike extends Container {
 		return this._data
 	}
 
+	getSize() {
+		return this._data.length
+	}
+
 	isEmpty() {
 		return this._data.length === 0
 	}
@@ -182,7 +186,7 @@ class _ArrayLike extends Container {
 
 	readData(reader, sizeReadMethod, itemReadPredicate) {
 		const count = sizeReadMethod(reader)
-		this._data.clear()
+		this.clear()
 		for (let i = 0; i < count; i++) {
 			const value = itemReadPredicate(reader)
 			assert(value !== undefined)
@@ -278,6 +282,20 @@ class Map extends Container {
 	}
 
 	set(key, value) {
+		if (!this.#data.has(key))
+			raise(`Key does not exist: ${key}`)
+		assert(value !== undefined)
+		this.#data.set(key, value)
+	}
+
+	create(key, value) {
+		if (this.#data.has(key))
+			raise(`Key already exists: ${key}=${value}`)
+		assert(value !== undefined)
+		this.#data.set(key, value)
+	}
+
+	setOrCreate(key, value) {
 		assert(value !== undefined)
 		this.#data.set(key, value)
 	}
@@ -330,7 +348,7 @@ class Map extends Container {
 	}
 
 	writeData(writer, sizeWriteMethod, itemWritePredicate) {
-		sizeWriteMethod(writer, this.#size)
+		sizeWriteMethod(writer, this.getSize())
 		for (const [key, value] of this.#data) {
 			itemWritePredicate(writer, key, value)
 		}
@@ -338,7 +356,7 @@ class Map extends Container {
 
 	readData(reader, sizeReadMethod, itemReadPredicate) {
 		const count = sizeReadMethod(reader)
-		this.#data.clear()
+		this.clear()
 
 		for (let i = 0; i < count; i++) {
 			const [key, value] = itemReadPredicate(reader)
@@ -367,7 +385,6 @@ class Set extends Container {
 		const inserted = this.tryInsert(value)
 		if (!inserted)
 			raise("duplicate element")
-		return !had
 	}
 
 	has(value) {
@@ -402,14 +419,14 @@ class Set extends Container {
 	}
 	
 	writeData(writer, sizeWriteMethod, itemWritePredicate) {
-		sizeWriteMethod(writer, this._data.size)
-		for (const value of this._data)
+		sizeWriteMethod(writer, this.getSize())
+		for (const value of this.#data)
 			itemWritePredicate(writer, value)
 	}
 
 	readData(reader, sizeReadMethod, itemReadPredicate) {
 		const count = sizeReadMethod(reader)
-		this._data.clear()
+		this.clear()
 		for (let i = 0; i < count; i++) {
 			const value = itemReadPredicate(reader)
 			assert(value !== undefined)
