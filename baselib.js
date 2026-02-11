@@ -6,9 +6,9 @@ function raise_typeerror(message) {
 	throw new TypeError(message)
 }
 
-function assert(value, message) {
+function assert(value, optMessage) {
     if (value === undefined || value === null || value === false)
-        raise(message || 'assertation failed!')
+        raise(optMessage || 'assertation failed!')
     return value
 }
 
