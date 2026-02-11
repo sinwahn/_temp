@@ -27,83 +27,83 @@ const Channel = {
 	Path: f,
 }
 
-const Logger = {}
+class Logger {
+	static _minLevel = LogLevel.DEBUG
+	static _sink = console.log
+	static _defaultChannel = "Default"
 
-Logger._minLevel = LogLevel.DEBUG
-Logger._sink = console.log
-Logger._defaultChannel = "Default"
-
-function Logger.setDefaultChannel(channel) {
-	Logger._defaultChannel = channel
-}
-
-function Logger.setSink(sink) {
-	Logger._sink = sink
-}
-
-function Logger.setMinLevel(level) {
-	Logger._minLevel = level
-}
-
-function Logger.enableChannel(channel) {
-	Channel[channel] = true
-}
-
-function Logger.disableChannel(channel) {
-	Channel[channel] = false
-}
-
-function Logger.isChannelEnabled(channel) {
-	return Channel[channel] === true
-}
-
-function Logger._shouldLog(channel, level) {
-	if (!Channel[channel]) {
-		return false
+	static setDefaultChannel(channel) {
+		Logger._defaultChannel = channel
 	}
-	if (level < Logger._minLevel) {
-		return false
+
+	static setSink(sink) {
+		Logger._sink = sink
 	}
-	return true
-}
 
-function Logger.log(channel, level, ...args) {
-	if (!Logger._shouldLog(channel, level)) {
-		return
+	static setMinLevel(level) {
+		Logger._minLevel = level
 	}
-	Logger._sink(channel, level, ...args)
-}
 
-function Logger.debug(channel, ...args) {
-	Logger.log(channel, LogLevel.DEBUG, ...args)
-}
+	static enableChannel(channel) {
+		Channel[channel] = true
+	}
 
-function Logger.info(channel, ...args) {
-	Logger.log(channel, LogLevel.INFO, ...args)
-}
+	static disableChannel(channel) {
+		Channel[channel] = false
+	}
 
-function Logger.warn(channel, ...args) {
-	Logger.log(channel, LogLevel.WARN, ...args)
-}
+	static isChannelEnabled(channel) {
+		return Channel[channel] === true
+	}
 
-function Logger.error(channel, ...args) {
-	Logger.log(channel, LogLevel.ERROR, ...args)
-}
+	static _shouldLog(channel, level) {
+		if (!Channel[channel]) {
+			return false
+		}
+		if (level < Logger._minLevel) {
+			return false
+		}
+		return true
+	}
 
-function Logger.debugDefault(...args) {
-	Logger.log(Logger._defaultChannel, LogLevel.DEBUG, ...args)
-}
+	static log(channel, level, ...args) {
+		if (!Logger._shouldLog(channel, level)) {
+			return
+		}
+		Logger._sink(channel, level, ...args)
+	}
 
-function Logger.infoDefault(...args) {
-	Logger.log(Logger._defaultChannel, LogLevel.INFO, ...args)
-}
+	static debug(channel, ...args) {
+		Logger.log(channel, LogLevel.DEBUG, ...args)
+	}
 
-function Logger.warnDefault(...args) {
-	Logger.log(Logger._defaultChannel, LogLevel.WARN, ...args)
-}
+	static info(channel, ...args) {
+		Logger.log(channel, LogLevel.INFO, ...args)
+	}
 
-function Logger.errorDefault(...args) {
-	Logger.log(Logger._defaultChannel, LogLevel.ERROR, ...args)
+	static warn(channel, ...args) {
+		Logger.log(channel, LogLevel.WARN, ...args)
+	}
+
+	static error(channel, ...args) {
+		Logger.log(channel, LogLevel.ERROR, ...args)
+	}
+
+	static debugDefault(...args) {
+		Logger.log(Logger._defaultChannel, LogLevel.DEBUG, ...args)
+	}
+
+	static infoDefault(...args) {
+		Logger.log(Logger._defaultChannel, LogLevel.INFO, ...args)
+	}
+
+	static warnDefault(...args) {
+		Logger.log(Logger._defaultChannel, LogLevel.WARN, ...args)
+	}
+
+	static errorDefault(...args) {
+		Logger.log(Logger._defaultChannel, LogLevel.ERROR, ...args)
+	}
 }
 
 module.exports = {
