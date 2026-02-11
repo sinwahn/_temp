@@ -451,6 +451,11 @@ class Stack extends _ArrayLike {
 			raise("stack underflow")
 		return this._data.pop()
 	}
+
+	top() {
+		assert(!this.isEmpty(), "stack is empty")
+		return this._data[this.getSize() - 1]
+	}
 }
 
 class Queue extends _ArrayLike {
