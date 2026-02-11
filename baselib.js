@@ -99,23 +99,6 @@ function expectinstanceof(
 	raise_typeerror(`'${expected}' expected, got '${actual}'`)
 }
 
-function expectinstanceof(value, ...classes) {
-	for (const constructor of classes) {
-		if (typeof constructor !== "function")
-			raise_typeerror("classes must be functions")
-
-		if (value instanceof C)
-			return value
-	}
-
-	const expected = classes.map(c => c.name || "<anonymous>").join(" | ")
-	const actual =
-		value === null ? "null" :
-		value?.constructor?.name ?? typeof value
-
-	raise_typeerror(`'${expected}' expected, got '${actual}'`)
-}
-
 class Container {}
 
 class _ArrayLike extends Container {
