@@ -126,7 +126,7 @@ class _ArrayLike extends Container {
 	}
 
 	*[Symbol.iterator]() {
-		for (const element of this.ädata)
+		for (const element of this._data)
 			yield element
 	}
 	
