@@ -275,7 +275,7 @@ class Vector extends _ArrayLike {
 }
 
 class Map extends Container {
-	#data = new Map()
+	#data = new globalThis.Map()
 
 	constructor() {
 		super()
@@ -368,7 +368,7 @@ class Map extends Container {
 }
 
 class Set extends Container {
-	#data = new Set()
+	#data = new globalThis.Set()
 
 	constructor() {
 		super()
