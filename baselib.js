@@ -104,9 +104,9 @@ class Container {}
 class _ArrayLike extends Container {
 	_data
 
-	constructor(elements) {
+	constructor(...args) {
 		super()
-		this._data = new globalThis.Array(elements)
+		this._data = new globalThis.Array(...args)
 	}
 
 	*[Symbol.iterator]() {
@@ -182,8 +182,8 @@ class _ArrayLike extends Container {
 
 class Vector extends _ArrayLike {
 
-	constructor(elements) {
-		super(elements);
+	constructor(...args) {
+		super(...args);
 	}
 	
 	set(index, value) {
@@ -260,83 +260,83 @@ class Vector extends _ArrayLike {
 }
 
 class Map extends Container {
-	#data
+	_data
 
-	constructor(elements) {
+	constructor(...args) {
 		super()
-		this.#data = new globalThis.Map(elements)
+		this._data = new globalThis.Map(...args)
 	}
 	
 	*[Symbol.iterator]() {
-		for (const element of this.#data)
+		for (const element of this._data)
 			yield element
 	}
 	
 	set(key, value) {
-		if (!this.#data.has(key))
+		if (!this._data.has(key))
 			raise(`Key does not exist: ${key}`)
 		assert(value !== undefined)
-		this.#data.set(key, value)
+		this._data.set(key, value)
 	}
 
 	create(key, value) {
-		if (this.#data.has(key))
+		if (this._data.has(key))
 			raise(`Key already exists: ${key}=${value}`)
 		assert(value !== undefined)
-		this.#data.set(key, value)
+		this._data.set(key, value)
 	}
 
 	setOrCreate(key, value) {
 		assert(value !== undefined)
-		this.#data.set(key, value)
+		this._data.set(key, value)
 	}
 
 	get(key) {
-		if (!this.#data.has(key))
+		if (!this._data.has(key))
 			raise(`Key not found: ${key}`)
-		return this.#data.get(key)
+		return this._data.get(key)
 	}
 
 	find(key) {
-		return this.#data.get(key)
+		return this._data.get(key)
 	}
 
 	remove(key) {
-		if (!this.#data.has(key))
+		if (!this._data.has(key))
 			raise(`Invalid key: ${key}`)
-		const value = this.#data.get(key)
-		this.#data.delete(key)
+		const value = this._data.get(key)
+		this._data.delete(key)
 		return value
 	}
 
 	tryRemove(key) {
-		if (!this.#data.has(key))
+		if (!this._data.has(key))
 			return null
-		const value = this.#data.get(key)
-		this.#data.delete(key)
+		const value = this._data.get(key)
+		this._data.delete(key)
 		return value
 	}
 
 	getSize() {
-		return this.#data.size
+		return this._data.size
 	}
 
 	clear() {
-		this.#data.clear()
+		this._data.clear()
 	}
 
 	getData() {
-		return this.#data
+		return this._data
 	}
 
 	forEach(predicate) {
-		for (const [key, value] of this.#data)
+		for (const [key, value] of this._data)
 			predicate(key, value)
 	}
 
 	writeData(writer, sizeWriteMethod, itemWritePredicate) {
 		sizeWriteMethod(writer, this.getSize())
-		for (const [key, value] of this.#data) {
+		for (const [key, value] of this._data) {
 			itemWritePredicate(writer, key, value)
 		}
 	}
@@ -348,32 +348,32 @@ class Map extends Container {
 			const [key, value] = itemReadPredicate(reader)
 			assert(key !== undefined)
 			assert(value !== undefined)
-			this.#data.set(key, value)
+			this._data.set(key, value)
 		}
 	}
 }
 
 class Set extends Container {
-	#data
+	_data
 
-	constructor(elements) {
+	constructor(...args) {
 		super()
-		this._data = new globalThis.Set(elements)
+		this._data = new globalThis.Set(...args)
 	}
 
 	*[Symbol.iterator]() {
-		for (const element of this.#data)
+		for (const element of this._data)
 			yield element
 	}
 
 	toVector() {
-		return new Vector(this.#data)
+		return new Vector(this._data)
 	}
 	
 	tryInsert(value) {
 		assert(value !== undefined)
 		const had = this.has(value)
-		this.#data.add(value)
+		this._data.add(value)
 		return !had
 	}
 
@@ -384,7 +384,7 @@ class Set extends Container {
 	}
 
 	has(value) {
-		return this.#data.has(value)
+		return this._data.has(value)
 	}
 
 	remove(value) {
@@ -394,25 +394,25 @@ class Set extends Container {
 	}
 
 	tryRemove(value) {
-		return this.#data.delete(value)
+		return this._data.delete(value)
 	}
 
 	getSize() {
-		return this.#data.size
+		return this._data.size
 	}
 
 	clear() {
-		this.#data.clear()
+		this._data.clear()
 	}
 
 	forEach(predicate) {
-		for (const value of this.#data)
+		for (const value of this._data)
 			predicate(value)
 	}
 	
 	writeData(writer, sizeWriteMethod, itemWritePredicate) {
 		sizeWriteMethod(writer, this.getSize())
-		for (const value of this.#data)
+		for (const value of this._data)
 			itemWritePredicate(writer, value)
 	}
 
@@ -429,8 +429,8 @@ class Set extends Container {
 
 class Stack extends _ArrayLike {
 
-	constructor(elements) {
-		super(elements)
+	constructor(...args) {
+		super(...args)
 	}
 
 	push(value) {
@@ -452,8 +452,8 @@ class Stack extends _ArrayLike {
 
 class Queue extends _ArrayLike {
 
-	constructor(elements) {
-		super(elements)
+	constructor(...args) {
+		super(...args)
 	}
 
 	enqueue(value) {
