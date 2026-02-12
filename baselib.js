@@ -219,11 +219,11 @@ class Vector extends _ArrayLike {
 	}
 
 	contains(value) {
-		return !!findPos(value)
+		return !!this.findPos(value)
 	}
 
 	containsBy(predicate) {
-		return !!findPosBy(predicate)
+		return !!this.findPosBy(predicate)
 	}
 
 	remove(index) {
@@ -307,6 +307,20 @@ class Map extends Container {
 
 	find(key) {
 		return this._data.get(key)
+	}
+
+	findKeyByValue(toFind) {
+		for (const [key, value] of this._data)
+			if (value == toFind)
+				return key
+		return undefined
+	}
+
+	findKeyBy(predicate) {
+		for (const [key, value] of this._data)
+			if (predicate(key, value))
+				return key
+		return undefined
 	}
 
 	remove(key) {
