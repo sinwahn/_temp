@@ -187,15 +187,15 @@ class Vector extends _ArrayLike {
 	}
 	
 	set(index, value) {
-		expecttype(index, "number")
-		assert(index > 0)
-		assert(index > this.getSize())
-		this._data[index] = value
+	    expecttype(index, "number")
+	    assert(index >= 0, `index must be non-negative: ${index}`)
+	    assert(index < this.getSize(), `index out of bounds: ${index}`)
+	    this._data[index] = value
 	}
-
+	
 	get(index) {
-		assert(index < 0 || index > this.getSize(), `vector index out of bounds: ${index}`)
-		return this._data[index]
+	    assert(index >= 0 && index < this.getSize(), `vector index out of bounds: ${index}`)
+	    return this._data[index]
 	}
 
 	front() {
@@ -217,19 +217,19 @@ class Vector extends _ArrayLike {
 		assert(!this.isEmpty(), "vector is empty")
 		return this._data.pop()
 	}
-
+	
 	contains(value) {
-		return !!this.findPos(value)
+	    return this.findPos(value) !== undefined
 	}
-
+	
 	containsBy(predicate) {
-		return !!this.findPosBy(predicate)
+	    return this.findPosBy(predicate) !== undefined
 	}
 
 	remove(index) {
-		if (index < 0 || index > (this.getSize() - 1))
-			raise(`index out of bounds: ${index}`)
-		return this._data.splice(index - 1, 1)[0]
+	    if (index < 0 || index >= this.getSize())
+	        raise(`index out of bounds: ${index}`)
+	    return this._data.splice(index, 1)[0]
 	}
 
 	removeBy(predicate) {
