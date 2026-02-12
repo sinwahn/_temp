@@ -271,7 +271,15 @@ class Map extends Container {
 		for (const element of this._data)
 			yield element
 	}
-	
+
+	keys() {
+		return new Vector(...this._data.keys())
+	}
+
+	values() {
+		return new Vector(...this._data.values())
+	}
+
 	set(key, value) {
 		if (!this._data.has(key))
 			raise(`Key does not exist: ${key}`)
@@ -367,7 +375,7 @@ class Set extends Container {
 	}
 
 	toVector() {
-		return new Vector(this._data)
+		return new Vector(...this._data)
 	}
 	
 	tryInsert(value) {
