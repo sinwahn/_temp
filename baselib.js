@@ -102,10 +102,11 @@ function expectinstanceof(
 class Container {}
 
 class _ArrayLike extends Container {
-	_data = []
+	_data
 
-	constructor() {
+	constructor(elements) {
 		super()
+		this._data = new globalThis.Array(elements)
 	}
 
 	*[Symbol.iterator]() {
@@ -181,8 +182,8 @@ class _ArrayLike extends Container {
 
 class Vector extends _ArrayLike {
 
-	constructor() {
-		super();
+	constructor(elements) {
+		super(elements);
 	}
 	
 	set(index, value) {
@@ -259,10 +260,11 @@ class Vector extends _ArrayLike {
 }
 
 class Map extends Container {
-	#data = new globalThis.Map()
+	#data
 
-	constructor() {
+	constructor(elements) {
 		super()
+		this.#data = new globalThis.Map(elements)
 	}
 	
 	*[Symbol.iterator]() {
@@ -342,7 +344,6 @@ class Map extends Container {
 	readData(reader, sizeReadMethod, itemReadPredicate) {
 		const count = sizeReadMethod(reader)
 		this.clear()
-
 		for (let i = 0; i < count; i++) {
 			const [key, value] = itemReadPredicate(reader)
 			assert(key !== undefined)
@@ -353,12 +354,22 @@ class Map extends Container {
 }
 
 class Set extends Container {
-	#data = new globalThis.Set()
+	#data
 
-	constructor() {
+	constructor(elements) {
 		super()
+		this._data = new globalThis.Set(elements)
 	}
 
+	*[Symbol.iterator]() {
+		for (const element of this.#data)
+			yield element
+	}
+
+	toVector() {
+		return new Vector(this.#data)
+	}
+	
 	tryInsert(value) {
 		assert(value !== undefined)
 		const had = this.has(value)
@@ -394,10 +405,6 @@ class Set extends Container {
 		this.#data.clear()
 	}
 
-	[Symbol.iterator]() {
-		return this.#data[Symbol.iterator]()
-	}
-
 	forEach(predicate) {
 		for (const value of this.#data)
 			predicate(value)
@@ -422,8 +429,8 @@ class Set extends Container {
 
 class Stack extends _ArrayLike {
 
-	constructor() {
-		super()
+	constructor(elements) {
+		super(elements)
 	}
 
 	push(value) {
@@ -445,8 +452,8 @@ class Stack extends _ArrayLike {
 
 class Queue extends _ArrayLike {
 
-	constructor() {
-		super()
+	constructor(elements) {
+		super(elements)
 	}
 
 	enqueue(value) {
