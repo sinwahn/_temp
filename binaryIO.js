@@ -162,41 +162,44 @@ class BinaryReader extends BinaryContainer {
 		return value
 	}
 
-	readString(size) {
+	readStringOfSize(size) {
 		const value = this.data.toString('utf8', this.position, this.position + size)
 		this.position += size
 		return value
 	}
 
-	readCString() {
-		const start = this.position
-		
-		while (this.position < this.size && this.data[this.position] !== 0) {
-			this.position += 1
-		}
-		
-		if (this.position === this.size) {
-			throw new Error('string is not null-terminated')
-		}
-		
-		const value = this.data.toString('utf8', start, this.position)
-		this.position += 1
-		return value
-	}
-
 	readStringU8() {
 		const size = this.readU8()
-		return this.readString(size)
+		return this.readStringOfSize(size)
 	}
 
 	readStringU16() {
 		const size = this.readU16()
-		return this.readString(size)
+		return this.readStringOfSize(size)
 	}
 
 	readStringU32() {
 		const size = this.readU32()
-		return this.readString(size)
+		return this.readStringOfSize(size)
+	}
+
+	readString() {
+		return this.readStringU32()
+	}
+
+	readCString() {
+		const start = this.position
+		let cursor = start
+
+		while (cursor < this.size && this.data[cursor] !== 0)
+			cursor += 1
+
+		if (cursor === this.size)
+			throw new Error('string is not null-terminated')
+
+		const value = this.data.toString('utf8', start, cursor)
+		this.position = cursor + 1
+		return value
 	}
 
 	readBool() {
@@ -348,26 +351,6 @@ class BinaryWriter extends BinaryContainer {
 		return currentSize
 	}
 
-	writeString(source) {
-		const stringSize = Buffer.byteLength(source, 'utf8')
-		const currentSize = this._reserveGrow(stringSize)
-		this.data.write(source, currentSize, stringSize, 'utf8')
-		return this
-	}
-
-	writeByteRepeated(source, count) {
-		this.writeString(source.repeat(count))
-		return this
-	}
-
-	writeCString(source) {
-		const stringSize = Buffer.byteLength(source, 'utf8')
-		const currentSize = this._reserveGrow(stringSize + 1)
-		this.data.write(source, currentSize, stringSize, 'utf8')
-		this.data.writeUInt8(0, currentSize + stringSize)
-		return this
-	}
-
 	writeU8(value) {
 		const currentSize = this._reserveGrow(1)
 		this.data.writeUInt8(value, currentSize)
@@ -421,6 +404,12 @@ class BinaryWriter extends BinaryContainer {
 		return this
 	}
 
+	writeStringOfSize(source, stringSize) {
+		const currentSize = this._reserveGrow(stringSize)
+		this.data.write(source, currentSize, stringSize, 'utf8')
+		return this
+	}
+
 	writeStringU8(source) {
 		this.writeU8(Buffer.byteLength(source, 'utf8'))
 		this.writeString(source)
@@ -436,6 +425,18 @@ class BinaryWriter extends BinaryContainer {
 	writeStringU32(source) {
 		this.writeU32(Buffer.byteLength(source, 'utf8'))
 		this.writeString(source)
+		return this
+	}
+
+	writeString(source) {
+		return this.writeStringU32(source)
+	}
+
+	writeCString(source) {
+		const stringSize = Buffer.byteLength(source, 'utf8')
+		const currentSize = this._reserveGrow(stringSize + 1)
+		this.data.write(source, currentSize, stringSize, 'utf8')
+		this.data.writeUInt8(0, currentSize + stringSize)
 		return this
 	}
 
@@ -580,6 +581,11 @@ class BinaryWriter extends BinaryContainer {
 		return this
 	}
 
+	writeByteRepeated(source, count) {
+		this.writeString(source.repeat(count))
+		return this
+	}
+
 	writeZeros(count) {
 		for (let i = 0; i < count; i++)
 			this.writeU8(0)
@@ -589,8 +595,4 @@ class BinaryWriter extends BinaryContainer {
 	toString() {
 		return this.data.toString('utf8', 0, this.size)
 	}
-}
-
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { clearBinaryHexData, BinaryContainer, BinaryReader, BinaryWriter };
 }
