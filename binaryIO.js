@@ -591,4 +591,6 @@ class BinaryWriter extends BinaryContainer {
 	}
 }
 
-module.exports = { BinaryContainer, BinaryReader, BinaryWriter }
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { clearBinaryHexData, BinaryContainer, BinaryReader, BinaryWriter };
+}
