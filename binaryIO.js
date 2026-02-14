@@ -5,6 +5,9 @@ function clearBinaryHexData(hexString) {
 		.replace(/[^0-9a-fA-F]/g, '')
 }
 
+const __BinaryContainer_decoder_utf = new TextDecoder('utf-8')
+const __BinaryContainer_decoder_ascii = new TextDecoder('ascii')
+
 class BinaryContainer {
 	constructor() {
 		this.data = null
@@ -20,7 +23,7 @@ class BinaryContainer {
 	reserve(newCapacity) {
 		if (newCapacity > this.capacity) {
 			const newData = new Uint8Array(newCapacity)
-			newData.set(this.data.subarray(0, this.capacity))
+			newData.set(this.data.subarray(0, this.capacity), 0)
 			this.data = newData
 			this.capacity = newCapacity
 		}
@@ -28,7 +31,7 @@ class BinaryContainer {
 
 	reallocate(newCapacity) {
 		const newData = new Uint8Array(newCapacity)
-		newData.set(this.data.subarray(0, this.size))
+		newData.set(this.data.subarray(0, this.size), 0)
 		this.data = newData
 		this.capacity = newCapacity
 	}
@@ -59,19 +62,13 @@ class BinaryContainer {
 	}
 
 	toAscii() {
-		const bytes = this.data.subarray(0, this.size)
-		let result = ''
-		for (let i = 0; i < bytes.length; i++) {
-			result += String.fromCharCode(bytes[i])
-		}
-		return result
+		return __BinaryContainer_decoder_ascii.decode(this.data.subarray(0, this.size))
 	}
 
 	assignAscii(str) {
 		const bytes = new Uint8Array(str.length)
 		for (let i = 0; i < str.length; i++) {
-			const code = str.charCodeAt(i)
-			bytes[i] = code & 0xFF
+			bytes[i] = str.charCodeAt(i) & 0xFF
 		}
 
 		this.data = bytes
@@ -170,24 +167,9 @@ class BinaryReader extends BinaryContainer {
 	}
 
 	readStringOfSize(size) {
-		const bytes = this.data.subarray(this.position, this.position + size)
+		const value = __BinaryContainer_decoder_utf.decode(this.data.subarray(this.position, this.position + size))
 		this.position += size
-		
-		// Decode UTF-8 manually for universal compatibility
-		const decoder = typeof TextDecoder !== 'undefined' 
-			? new TextDecoder('utf-8')
-			: null
-		
-		if (decoder) {
-			return decoder.decode(bytes)
-		} else {
-			// Fallback for older environments
-			let result = ''
-			for (let i = 0; i < bytes.length; i++) {
-				result += String.fromCharCode(bytes[i])
-			}
-			return result
-		}
+		return value
 	}
 
 	readStringU8() {
@@ -219,8 +201,8 @@ class BinaryReader extends BinaryContainer {
 		if (cursor === this.size)
 			throw new Error('string is not null-terminated')
 
-		const value = this.readStringOfSize(cursor - start)
-		this.position += 1 // skip null terminator
+		const value = __BinaryContainer_decoder_utf.decode(this.data.subarray(start, cursor))
+		this.position = cursor + 1
 		return value
 	}
 
@@ -360,17 +342,18 @@ class BinaryWriter extends BinaryContainer {
 		const newSize = currentSize + size
 
 		if (newSize > currentCapacity) {
-			const newCapacity = Math.max(newSize, currentCapacity * 2)
-			const newData = new Uint8Array(newCapacity)
-			if (this.data) {
-				newData.set(this.data.subarray(0, currentSize))
-			}
+			const newData = new Uint8Array(newSize)
+			if (this.data)
+				newData.set(this.data.subarray(0, currentSize), 0)
+				
 			this.data = newData
-			this.view = new DataView(newData.buffer)
-			this.capacity = newCapacity
+			this.view = new DataView(newData.buffer, newData.byteOffset, newData.byteLength)
+			this.size = newSize
+			this.capacity = newSize
+		} else {
+			this.size = newSize
 		}
-		
-		this.size = newSize
+
 		return currentSize
 	}
 
@@ -429,60 +412,36 @@ class BinaryWriter extends BinaryContainer {
 
 	writeStringOfSize(source, stringSize) {
 		const currentSize = this._reserveGrow(stringSize)
-		
-		// Encode UTF-8 manually for universal compatibility
-		const encoder = typeof TextEncoder !== 'undefined' 
-			? new TextEncoder()
-			: null
-		
-		if (encoder) {
-			const encoded = encoder.encode(source)
-			this.data.set(encoded.subarray(0, stringSize), currentSize)
-		} else {
-			// Fallback for older environments
-			for (let i = 0; i < stringSize && i < source.length; i++) {
-				this.data[currentSize + i] = source.charCodeAt(i) & 0xFF
-			}
-		}
+		const encoder = new TextEncoder()
+		const encoded = encoder.encode(source)
+		this.data.set(encoded.subarray(0, stringSize), currentSize)
 		return this
 	}
 
-	_getByteLength(str) {
-		// Calculate UTF-8 byte length
-		if (typeof TextEncoder !== 'undefined') {
-			return new TextEncoder().encode(str).length
-		} else {
-			// Fallback approximation
-			let length = 0
-			for (let i = 0; i < str.length; i++) {
-				const code = str.charCodeAt(i)
-				if (code < 0x80) length += 1
-				else if (code < 0x800) length += 2
-				else if (code < 0x10000) length += 3
-				else length += 4
-			}
-			return length
-		}
-	}
-
 	writeStringU8(source) {
-		const byteLength = this._getByteLength(source)
-		this.writeU8(byteLength)
-		this.writeStringOfSize(source, byteLength)
+		const encoder = new TextEncoder()
+		const encoded = encoder.encode(source)
+		this.writeU8(encoded.length)
+		const currentSize = this._reserveGrow(encoded.length)
+		this.data.set(encoded, currentSize)
 		return this
 	}
 
 	writeStringU16(source) {
-		const byteLength = this._getByteLength(source)
-		this.writeU16(byteLength)
-		this.writeStringOfSize(source, byteLength)
+		const encoder = new TextEncoder()
+		const encoded = encoder.encode(source)
+		this.writeU16(encoded.length)
+		const currentSize = this._reserveGrow(encoded.length)
+		this.data.set(encoded, currentSize)
 		return this
 	}
 
 	writeStringU32(source) {
-		const byteLength = this._getByteLength(source)
-		this.writeU32(byteLength)
-		this.writeStringOfSize(source, byteLength)
+		const encoder = new TextEncoder()
+		const encoded = encoder.encode(source)
+		this.writeU32(encoded.length)
+		const currentSize = this._reserveGrow(encoded.length)
+		this.data.set(encoded, currentSize)
 		return this
 	}
 
@@ -491,9 +450,11 @@ class BinaryWriter extends BinaryContainer {
 	}
 
 	writeCString(source) {
-		const byteLength = this._getByteLength(source)
-		this.writeStringOfSize(source, byteLength)
-		this.writeU8(0) // null terminator
+		const encoder = new TextEncoder()
+		const encoded = encoder.encode(source)
+		const currentSize = this._reserveGrow(encoded.length + 1)
+		this.data.set(encoded, currentSize)
+		this.data[currentSize + encoded.length] = 0
 		return this
 	}
 
@@ -604,12 +565,27 @@ class BinaryWriter extends BinaryContainer {
 	}
 
 	writeVarInt(value) {
-		while (value >= 128) {
-			const byte = (value & 127) | 128
-			this.writeU8(byte)
-			value = value >>> 7
+		let size = 0
+		let temp = value
+
+		while (temp >= 128) {
+			size += 1
+			temp = temp >> 7
 		}
-		this.writeU8(value)
+		size += 1
+
+		const currentSize = this._reserveGrow(size)
+		let bitPosition = 0
+
+		temp = value
+		while (temp >= 128) {
+			const byte = (temp & 127) | 128
+			this.data[currentSize + bitPosition] = byte
+			bitPosition += 1
+			temp = temp >> 7
+		}
+
+		this.data[currentSize + bitPosition] = temp
 		return this
 	}
 
@@ -624,9 +600,10 @@ class BinaryWriter extends BinaryContainer {
 	}
 
 	writeByteRepeated(source, count) {
-		for (let i = 0; i < count; i++) {
-			this.writeStringOfSize(source, this._getByteLength(source))
-		}
+		const encoder = new TextEncoder()
+		const encoded = encoder.encode(source.repeat(count))
+		const currentSize = this._reserveGrow(encoded.length)
+		this.data.set(encoded, currentSize)
 		return this
 	}
 
@@ -637,33 +614,10 @@ class BinaryWriter extends BinaryContainer {
 	}
 
 	toString() {
-		const bytes = this.data.subarray(0, this.size)
-		const decoder = typeof TextDecoder !== 'undefined'
-			? new TextDecoder('utf-8')
-			: null
-		
-		if (decoder) {
-			return decoder.decode(bytes)
-		} else {
-			let result = ''
-			for (let i = 0; i < bytes.length; i++) {
-				result += String.fromCharCode(bytes[i])
-			}
-			return result
-		}
-	}
-
-	toBuffer() {
-		return this.data.subarray(0, this.size)
+		return __BinaryContainer_decoder_utf.decode(this.data.subarray(0, this.size))
 	}
 }
 
-// Export for both Node.js and browsers
 if (typeof module !== 'undefined' && module.exports) {
-	module.exports = {
-		BinaryContainer,
-		BinaryReader,
-		BinaryWriter,
-		clearBinaryHexData
-	}
+	module.exports = { BinaryContainer, BinaryReader, BinaryWriter, clearBinaryHexData }
 }
